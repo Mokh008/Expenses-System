@@ -7,7 +7,6 @@
 <style>
 :root{
   --primary:#0F172A;
-  --secondary:#1E293B;
   --accent:#22C55E;
   --bg:#F8FAFC;
   --text:#020617;
@@ -27,72 +26,36 @@ body{
   box-shadow:0 20px 40px rgba(0,0,0,.1);
   padding:30px;
 }
-h1{
-  margin:0 0 10px;
-  text-align:center;
-  color:var(--primary);
-}
-.subtitle{
-  text-align:center;
-  color:#64748B;
-  margin-bottom:30px;
-}
+h1{text-align:center;color:var(--primary)}
 .field{margin-bottom:20px}
-label{
-  display:block;
-  margin-bottom:6px;
-  font-weight:600;
-}
+label{font-weight:600;display:block;margin-bottom:6px}
 input,select,button{
   width:100%;
   padding:12px;
   border-radius:10px;
   border:1px solid #CBD5E1;
-  font-size:15px;
-}
-input:focus,select:focus{
-  outline:none;
-  border-color:var(--accent);
 }
 button{
   background:var(--primary);
   color:#fff;
-  border:none;
   font-weight:600;
   cursor:pointer;
-  transition:.3s;
 }
-button:hover{background:#020617}
-.days-box{
-  margin-top:25px;
-  display:none;
-}
+.days-box{margin-top:20px;display:none}
 .day{
-  padding:10px;
   border:1px solid #E5E7EB;
   border-radius:8px;
+  padding:10px;
   margin-bottom:8px;
   display:flex;
-  align-items:center;
   gap:10px;
 }
 .summary{
-  margin-top:20px;
-  padding:15px;
   background:#F1F5F9;
+  padding:15px;
   border-radius:10px;
+  margin-top:20px;
   display:none;
-}
-.summary div{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:6px;
-}
-.footer{
-  text-align:center;
-  margin-top:25px;
-  font-size:13px;
-  color:#64748B;
 }
 </style>
 </head>
@@ -100,105 +63,116 @@ button:hover{background:#020617}
 <body>
 
 <div class="container">
-  <h1>تقديم مصروفات الإعاشة</h1>
-  <div class="subtitle">يرجى إدخال البيانات بدقة</div>
+<h1>تقديم مصروفات الإعاشة</h1>
 
-  <div class="field">
-    <label>رقم المهندس (ID)</label>
-    <input type="number" id="empId" placeholder="مثال: 1001730">
-  </div>
+<div class="field">
+<label>رقم المهندس</label>
+<input type="number" id="empId">
+</div>
 
-  <div class="field">
-    <label>الشهر</label>
-    <select id="month">
-      <option value="">-- اختر الشهر --</option>
-      <option value="1">يناير</option>
-      <option value="2">فبراير</option>
-      <option value="3">مارس</option>
-      <option value="4">أبريل</option>
-      <option value="5">مايو</option>
-      <option value="6">يونيو</option>
-      <option value="7">يوليو</option>
-      <option value="8">أغسطس</option>
-      <option value="9">سبتمبر</option>
-      <option value="10">أكتوبر</option>
-      <option value="11">نوفمبر</option>
-      <option value="12">ديسمبر</option>
-    </select>
-  </div>
+<div class="field">
+<label>الشهر</label>
+<select id="month">
+<option value="">اختر</option>
+<option value="1">يناير</option>
+<option value="2">فبراير</option>
+<option value="3">مارس</option>
+<option value="4">أبريل</option>
+<option value="5">مايو</option>
+<option value="6">يونيو</option>
+<option value="7">يوليو</option>
+<option value="8">أغسطس</option>
+<option value="9">سبتمبر</option>
+<option value="10">أكتوبر</option>
+<option value="11">نوفمبر</option>
+<option value="12">ديسمبر</option>
+</select>
+</div>
 
-  <button onclick="loadAttendance()">تحميل أيام الحضور</button>
+<button onclick="loadAttendance()">تحميل أيام الحضور</button>
 
-  <div class="days-box" id="daysBox"></div>
+<div class="days-box" id="daysBox"></div>
 
-  <div class="summary" id="summary">
-    <div><span>عدد الأيام</span><strong id="daysCount">0</strong></div>
-    <div><span>الإجمالي</span><strong id="total">0 EGP</strong></div>
-  </div>
+<div class="summary" id="summary">
+<div>عدد الأيام: <strong id="daysCount">0</strong></div>
+<div>الإجمالي: <strong id="total">0</strong> جنيه</div>
+</div>
 
-  <button style="margin-top:20px;display:none" id="submitBtn">
-    إنشاء ملف المصروفات
-  </button>
-
-  <div class="footer">نظام مصروفات الإعاشة</div>
+<button id="submitBtn" style="display:none" onclick="submitExpenses()">
+إنشاء ملف المصروفات
+</button>
 </div>
 
 <script>
-/* 🔗 Backend URL (الجديد) */
 const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbxz5rGJu1qmqnLBZ8KGpAdabxFNrcQzL-u-2Wb-ljHda_s8s2GKkQ2oDHA1Qp_lA0gl/exec";
+"https://script.google.com/macros/s/AKfycbwrlOdHOznZ-Ls9Fxlp0pQ4MlooXA_zukXlvGwtTHxWbQUbG1VramnPuJhmZAKccS5K/exec";
 
 function loadAttendance(){
-  const id = document.getElementById("empId").value;
-  const month = document.getElementById("month").value;
+  const id = empId.value;
+  const m = month.value;
+  if(!id||!m){alert("أدخل البيانات");return;}
 
-  if(!id || !month){
-    alert("من فضلك أدخل رقم المهندس والشهر");
-    return;
-  }
+  daysBox.style.display="block";
+  daysBox.innerHTML="جاري التحميل...";
 
-  const box = document.getElementById("daysBox");
-  box.style.display="block";
-  box.innerHTML="جاري التحميل...";
-
-  fetch(`${WEB_APP_URL}?id=${id}&month=${month}`)
-    .then(r=>r.json())
-    .then(data=>{
-      box.innerHTML="";
-
-      if(data.error){
-        box.innerHTML="خطأ في البيانات";
-        return;
-      }
-
-      if(!data.length){
-        box.innerHTML="لا توجد أيام حضور لهذا الشهر";
-        return;
-      }
-
-      data.forEach(d=>{
-        box.innerHTML+=`
-          <div class="day">
-            <input type="checkbox" onchange="calc()">
-            <span>${d.date} (${d.day})</span>
-          </div>
-        `;
-      });
-    })
-    .catch(()=>{
-      box.innerHTML="حدث خطأ في الاتصال";
+  fetch(`${WEB_APP_URL}?action=getDays&id=${id}&month=${m}`)
+  .then(r=>r.json())
+  .then(data=>{
+    daysBox.innerHTML="";
+    data.forEach(d=>{
+      daysBox.innerHTML+=`
+        <div class="day">
+        <input type="checkbox" data-date="${d.date}" data-day="${d.day}" onchange="calc()">
+        ${d.date} (${d.day})
+        </div>`;
     });
+  });
 }
 
 function calc(){
-  const days =
-    document.querySelectorAll(".day input:checked").length;
+  const checked=[...document.querySelectorAll(".day input:checked")];
+  daysCount.innerText=checked.length;
+  total.innerText=checked.length*200;
+  summary.style.display="block";
+  submitBtn.style.display="block";
+}
 
-  document.getElementById("summary").style.display="block";
-  document.getElementById("submitBtn").style.display="block";
+function groupByWeekDay(){
+  const checked=[...document.querySelectorAll(".day input:checked")];
+  const map={};
 
-  document.getElementById("daysCount").innerText = days;
-  document.getElementById("total").innerText = (days*200)+" EGP";
+  checked.forEach(c=>{
+    const d=new Date(c.dataset.date);
+    const dayName=c.dataset.day;
+    if(!map[dayName]) map[dayName]=[];
+    map[dayName].push(d);
+  });
+
+  const result={};
+  for(let k in map){
+    if(map[k].length===1){
+      result[k]=map[k][0].getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][map[k][0].getMonth()];
+    }else{
+      result[k]=map[k].map(x=>x.getDate()+"/"+(x.getMonth()+1)).join(" & ");
+    }
+  }
+  return result;
+}
+
+function submitExpenses(){
+  const payload={
+    action:"submit",
+    id:empId.value,
+    month:month.value,
+    days:+daysCount.innerText,
+    total:+total.innerText,
+    breakdown:groupByWeekDay()
+  };
+
+  fetch(WEB_APP_URL,{
+    method:"POST",
+    body:JSON.stringify(payload)
+  }).then(()=>alert("تم إنشاء ملف المصروفات"));
 }
 </script>
 
