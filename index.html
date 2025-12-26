@@ -166,33 +166,60 @@ button:hover{
 </div>
 
 <script>
+/* 🔗 Backend URL */
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwRMxod9LfE2WdXiJ2p9h-rNXj-_cGo4eseJx0q8F218EjhUmx-vB3v_tZBHmrugG-z/exec";
+
+/* تحميل أيام الحضور */
 function loadAttendance(){
+  const id = document.getElementById("empId").value;
+  const month = document.getElementById("month").value;
+
+  if(!id || !month){
+    alert("من فضلك أدخل رقم المهندس والشهر");
+    return;
+  }
+
   const box = document.getElementById("daysBox");
   box.style.display="block";
-  box.innerHTML="";
+  box.innerHTML="جاري التحميل...";
 
-  // بيانات تجريبية مؤقتًا
-  const days = [
-    "21 Dec (Sunday)",
-    "23 Dec (Tuesday)",
-    "28 Dec (Sunday)"
-  ];
+  fetch(`${WEB_APP_URL}?id=${id}&month=${month}`)
+    .then(res => res.json())
+    .then(data => {
+      box.innerHTML="";
 
-  days.forEach(d=>{
-    box.innerHTML += `
-      <div class="day">
-        <input type="checkbox" onchange="calc()">
-        <span>${d}</span>
-      </div>
-    `;
-  });
+      if(data.error){
+        box.innerHTML = "خطأ في البيانات";
+        return;
+      }
+
+      if(data.length === 0){
+        box.innerHTML = "لا توجد أيام حضور لهذا الشهر";
+        return;
+      }
+
+      data.forEach(d=>{
+        box.innerHTML += `
+          <div class="day">
+            <input type="checkbox" onchange="calc()">
+            <span>${d.date} (${d.day})</span>
+          </div>
+        `;
+      });
+    })
+    .catch(()=>{
+      box.innerHTML="حدث خطأ في الاتصال";
+    });
 }
 
+/* الحساب */
 function calc(){
   const checks = document.querySelectorAll(".day input:checked");
   const days = checks.length;
+
   document.getElementById("summary").style.display="block";
   document.getElementById("submitBtn").style.display="block";
+
   document.getElementById("daysCount").innerText = days;
   document.getElementById("total").innerText = (days * 200) + " EGP";
 }
