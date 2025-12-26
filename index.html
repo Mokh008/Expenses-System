@@ -12,16 +12,13 @@
   --bg:#F8FAFC;
   --text:#020617;
 }
-
 *{box-sizing:border-box}
-
 body{
   margin:0;
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family:"Segoe UI",Tahoma,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
 }
-
 .container{
   max-width:480px;
   margin:60px auto;
@@ -30,42 +27,33 @@ body{
   box-shadow:0 20px 40px rgba(0,0,0,.1);
   padding:30px;
 }
-
 h1{
   margin:0 0 10px;
   text-align:center;
   color:var(--primary);
 }
-
 .subtitle{
   text-align:center;
   color:#64748B;
   margin-bottom:30px;
 }
-
-.field{
-  margin-bottom:20px;
-}
-
+.field{margin-bottom:20px}
 label{
   display:block;
   margin-bottom:6px;
   font-weight:600;
 }
-
-input, select, button{
+input,select,button{
   width:100%;
   padding:12px;
   border-radius:10px;
   border:1px solid #CBD5E1;
   font-size:15px;
 }
-
-input:focus, select:focus{
+input:focus,select:focus{
   outline:none;
   border-color:var(--accent);
 }
-
 button{
   background:var(--primary);
   color:#fff;
@@ -74,16 +62,11 @@ button{
   cursor:pointer;
   transition:.3s;
 }
-
-button:hover{
-  background:#020617;
-}
-
+button:hover{background:#020617}
 .days-box{
   margin-top:25px;
   display:none;
 }
-
 .day{
   padding:10px;
   border:1px solid #E5E7EB;
@@ -93,7 +76,6 @@ button:hover{
   align-items:center;
   gap:10px;
 }
-
 .summary{
   margin-top:20px;
   padding:15px;
@@ -101,13 +83,11 @@ button:hover{
   border-radius:10px;
   display:none;
 }
-
 .summary div{
   display:flex;
   justify-content:space-between;
   margin-bottom:6px;
 }
-
 .footer{
   text-align:center;
   margin-top:25px;
@@ -160,16 +140,14 @@ button:hover{
     إنشاء ملف المصروفات
   </button>
 
-  <div class="footer">
-    نظام مصروفات الإعاشة
-  </div>
+  <div class="footer">نظام مصروفات الإعاشة</div>
 </div>
 
 <script>
-/* 🔗 Backend URL */
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLiJa1vJ6QKIc0GgY03eSPiTWBsXTKix-04yMQ5tOBpbGYEWxD5Q674qxw4_KpaQgW/exec";
+/* 🔗 Backend URL (الجديد) */
+const WEB_APP_URL =
+"https://script.google.com/macros/s/AKfycbxz5rGJu1qmqnLBZ8KGpAdabxFNrcQzL-u-2Wb-ljHda_s8s2GKkQ2oDHA1Qp_lA0gl/exec";
 
-/* تحميل أيام الحضور */
 function loadAttendance(){
   const id = document.getElementById("empId").value;
   const month = document.getElementById("month").value;
@@ -184,22 +162,22 @@ function loadAttendance(){
   box.innerHTML="جاري التحميل...";
 
   fetch(`${WEB_APP_URL}?id=${id}&month=${month}`)
-    .then(res => res.json())
-    .then(data => {
+    .then(r=>r.json())
+    .then(data=>{
       box.innerHTML="";
 
       if(data.error){
-        box.innerHTML = "خطأ في البيانات";
+        box.innerHTML="خطأ في البيانات";
         return;
       }
 
-      if(data.length === 0){
-        box.innerHTML = "لا توجد أيام حضور لهذا الشهر";
+      if(!data.length){
+        box.innerHTML="لا توجد أيام حضور لهذا الشهر";
         return;
       }
 
       data.forEach(d=>{
-        box.innerHTML += `
+        box.innerHTML+=`
           <div class="day">
             <input type="checkbox" onchange="calc()">
             <span>${d.date} (${d.day})</span>
@@ -212,16 +190,15 @@ function loadAttendance(){
     });
 }
 
-/* الحساب */
 function calc(){
-  const checks = document.querySelectorAll(".day input:checked");
-  const days = checks.length;
+  const days =
+    document.querySelectorAll(".day input:checked").length;
 
   document.getElementById("summary").style.display="block";
   document.getElementById("submitBtn").style.display="block";
 
   document.getElementById("daysCount").innerText = days;
-  document.getElementById("total").innerText = (days * 200) + " EGP";
+  document.getElementById("total").innerText = (days*200)+" EGP";
 }
 </script>
 
