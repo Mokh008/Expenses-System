@@ -41,6 +41,10 @@ button{
   font-weight:600;
   cursor:pointer;
 }
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
 .days-box{margin-top:20px;display:none}
 .day{
   border:1px solid #E5E7EB;
@@ -56,6 +60,22 @@ button{
   border-radius:10px;
   margin-top:20px;
   display:none;
+}
+.loader{
+  display:none;
+  text-align:center;
+  margin-top:15px;
+  font-weight:600;
+}
+.success{
+  display:none;
+  background:#DCFCE7;
+  color:#166534;
+  padding:12px;
+  border-radius:10px;
+  margin-top:15px;
+  text-align:center;
+  font-weight:600;
 }
 .footer{
   text-align:center;
@@ -108,15 +128,23 @@ button{
 إنشاء ملف المصروفات
 </button>
 
+<div class="loader" id="loader">
+⏳ جاري إنشاء ملف المصروفات برجاء الانتظار...
+</div>
+
+<div class="success" id="successBox">
+✅ تم إنشاء ملف المصروفات بنجاح
+</div>
+
 <div class="footer">
 نظام مصروفات الإعاشة
 </div>
 </div>
 
 <script>
-// 🔗 BACKEND URL (الجديد)
+// 🔗 BACKEND URL
 const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbyijgTcuHGstxcK6Kq9t__pkKYpbfWebHT_MTxfxPvB2drAS6XsalDKI69zlKcfkf6w/exec;
+"https://script.google.com/macros/s/AKfycbyijgTcuHGstxcK6Kq9t__pkKYpbfWebHT_MTxfxPvB2drAS6XsalDKI69zlKcfkf6w/exec";
 
 // تحميل أيام الحضور
 function loadAttendance(){
@@ -168,7 +196,7 @@ function calc(){
   submitBtn.style.display="block";
 }
 
-// تجميع التواريخ حسب أيام الأسبوع
+// تجميع حسب اليوم
 function groupByWeekDay(){
   const checked =
     document.querySelectorAll(".day input:checked");
@@ -177,34 +205,34 @@ function groupByWeekDay(){
   checked.forEach(c=>{
     const d = new Date(c.dataset.date);
     const dayName = c.dataset.day;
-
     if(!map[dayName]) map[dayName]=[];
-
     map[dayName].push(d);
   });
 
   const result={};
-  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
   for(let k in map){
-    if(map[k].length===1){
-      result[k]=
-        map[k][0].getDate()+" "+
-        months[map[k][0].getMonth()];
-    }else{
-      result[k]=
-        map[k].map(x=>x.getDate()+"/"+(x.getMonth()+1)).join(" & ");
-    }
+    result[k]=map[k]
+      .map(x=>x.getDate()+"/"+(x.getMonth()+1))
+      .join(" & ");
   }
   return result;
 }
 
-// إرسال البيانات + توليد PDF
+// إرسال البيانات
 function submitExpenses(){
+
+  if(+daysCount.innerText === 0){
+    alert("من فضلك اختر يوم واحد على الأقل");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  loader.style.display="block";
+  successBox.style.display="none";
+
   const payload={
     action:"submit",
     id:empId.value,
-    name:"",
     month:month.value,
     days:+daysCount.innerText,
     total:+total.innerText,
@@ -217,13 +245,33 @@ function submitExpenses(){
   })
   .then(r=>r.json())
   .then(res=>{
+    loader.style.display="none";
+    submitBtn.disabled = false;
+
     if(res.pdf){
-      window.open(res.pdf,"_blank");
+      successBox.style.display="block";
+      successBox.innerHTML = `
+        ✅ تم إنشاء ملف المصروفات بنجاح<br><br>
+        <a href="${res.pdf}" target="_blank"
+           style="
+             display:inline-block;
+             background:#0F172A;
+             color:#fff;
+             padding:10px 20px;
+             border-radius:10px;
+             text-decoration:none;
+             font-weight:600;
+           ">
+          📄 تحميل ملف المصروفات (PDF)
+        </a>
+      `;
     }else{
-      alert("تم الحفظ");
+      alert("تم الحفظ ولكن لم يتم إنشاء ملف PDF");
     }
   })
   .catch(()=>{
+    loader.style.display="none";
+    submitBtn.disabled = false;
     alert("حدث خطأ أثناء الإرسال");
   });
 }
