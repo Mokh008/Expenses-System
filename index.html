@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>تقديم مصروفات الإعاشة</title>
+
+<style>
+:root{
+  --primary:#0F172A;
+  --secondary:#1E293B;
+  --accent:#22C55E;
+  --bg:#F8FAFC;
+  --text:#020617;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.container{
+  max-width:480px;
+  margin:60px auto;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.1);
+  padding:30px;
+}
+
+h1{
+  margin:0 0 10px;
+  text-align:center;
+  color:var(--primary);
+}
+
+.subtitle{
+  text-align:center;
+  color:#64748B;
+  margin-bottom:30px;
+}
+
+.field{
+  margin-bottom:20px;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:600;
+}
+
+input, select, button{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #CBD5E1;
+  font-size:15px;
+}
+
+input:focus, select:focus{
+  outline:none;
+  border-color:var(--accent);
+}
+
+button{
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+  transition:.3s;
+}
+
+button:hover{
+  background:#020617;
+}
+
+.days-box{
+  margin-top:25px;
+  display:none;
+}
+
+.day{
+  padding:10px;
+  border:1px solid #E5E7EB;
+  border-radius:8px;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.summary{
+  margin-top:20px;
+  padding:15px;
+  background:#F1F5F9;
+  border-radius:10px;
+  display:none;
+}
+
+.summary div{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
+
+.footer{
+  text-align:center;
+  margin-top:25px;
+  font-size:13px;
+  color:#64748B;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>تقديم مصروفات الإعاشة</h1>
+  <div class="subtitle">يرجى إدخال البيانات بدقة</div>
+
+  <div class="field">
+    <label>رقم المهندس (ID)</label>
+    <input type="number" id="empId" placeholder="مثال: 1001730">
+  </div>
+
+  <div class="field">
+    <label>الشهر</label>
+    <select id="month">
+      <option value="">-- اختر الشهر --</option>
+      <option value="1">يناير</option>
+      <option value="2">فبراير</option>
+      <option value="3">مارس</option>
+      <option value="4">أبريل</option>
+      <option value="5">مايو</option>
+      <option value="6">يونيو</option>
+      <option value="7">يوليو</option>
+      <option value="8">أغسطس</option>
+      <option value="9">سبتمبر</option>
+      <option value="10">أكتوبر</option>
+      <option value="11">نوفمبر</option>
+      <option value="12">ديسمبر</option>
+    </select>
+  </div>
+
+  <button onclick="loadAttendance()">تحميل أيام الحضور</button>
+
+  <div class="days-box" id="daysBox"></div>
+
+  <div class="summary" id="summary">
+    <div><span>عدد الأيام</span><strong id="daysCount">0</strong></div>
+    <div><span>الإجمالي</span><strong id="total">0 EGP</strong></div>
+  </div>
+
+  <button style="margin-top:20px;display:none" id="submitBtn">
+    إنشاء ملف المصروفات
+  </button>
+
+  <div class="footer">
+    نظام مصروفات الإعاشة
+  </div>
+</div>
+
+<script>
+function loadAttendance(){
+  const box = document.getElementById("daysBox");
+  box.style.display="block";
+  box.innerHTML="";
+
+  // بيانات تجريبية مؤقتًا
+  const days = [
+    "21 Dec (Sunday)",
+    "23 Dec (Tuesday)",
+    "28 Dec (Sunday)"
+  ];
+
+  days.forEach(d=>{
+    box.innerHTML += `
+      <div class="day">
+        <input type="checkbox" onchange="calc()">
+        <span>${d}</span>
+      </div>
+    `;
+  });
+}
+
+function calc(){
+  const checks = document.querySelectorAll(".day input:checked");
+  const days = checks.length;
+  document.getElementById("summary").style.display="block";
+  document.getElementById("submitBtn").style.display="block";
+  document.getElementById("daysCount").innerText = days;
+  document.getElementById("total").innerText = (days * 200) + " EGP";
+}
+</script>
+
+</body>
+</html>
