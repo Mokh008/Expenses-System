@@ -7,7 +7,6 @@
 <style>
 :root{
   --primary:#0F172A;
-  --accent:#22C55E;
   --bg:#F8FAFC;
   --text:#020617;
 }
@@ -34,6 +33,7 @@ input,select,button{
   padding:12px;
   border-radius:10px;
   border:1px solid #CBD5E1;
+  font-size:15px;
 }
 button{
   background:var(--primary);
@@ -57,6 +57,12 @@ button{
   margin-top:20px;
   display:none;
 }
+.footer{
+  text-align:center;
+  margin-top:25px;
+  font-size:13px;
+  color:#64748B;
+}
 </style>
 </head>
 
@@ -66,14 +72,14 @@ button{
 <h1>تقديم مصروفات الإعاشة</h1>
 
 <div class="field">
-<label>رقم المهندس</label>
-<input type="number" id="empId">
+<label>رقم المهندس (ID)</label>
+<input type="number" id="empId" placeholder="مثال: 1001730">
 </div>
 
 <div class="field">
 <label>الشهر</label>
 <select id="month">
-<option value="">اختر</option>
+<option value="">اختر الشهر</option>
 <option value="1">يناير</option>
 <option value="2">فبراير</option>
 <option value="3">مارس</option>
@@ -95,22 +101,31 @@ button{
 
 <div class="summary" id="summary">
 <div>عدد الأيام: <strong id="daysCount">0</strong></div>
-<div>الإجمالي: <strong id="total">0</strong> جنيه</div>
+<div>إجمالي الإعاشة: <strong id="total">0</strong> جنيه</div>
 </div>
 
 <button id="submitBtn" style="display:none" onclick="submitExpenses()">
 إنشاء ملف المصروفات
 </button>
+
+<div class="footer">
+نظام مصروفات الإعاشة
+</div>
 </div>
 
 <script>
+// 🔗 BACKEND URL (الجديد)
 const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbwrlOdHOznZ-Ls9Fxlp0pQ4MlooXA_zukXlvGwtTHxWbQUbG1VramnPuJhmZAKccS5K/exec";
+"https://script.google.com/macros/s/AKfycbxfskDx_BXsPsHbq9k9Cs18qfa2qLQ-TWQvZT7NT0sdK2OtsUDwbog7GDdUSezXrEcq/exec";
 
+// تحميل أيام الحضور
 function loadAttendance(){
   const id = empId.value;
-  const m = month.value;
-  if(!id||!m){alert("أدخل البيانات");return;}
+  const m  = month.value;
+  if(!id || !m){
+    alert("من فضلك أدخل رقم المهندس والشهر");
+    return;
+  }
 
   daysBox.style.display="block";
   daysBox.innerHTML="جاري التحميل...";
@@ -119,50 +134,77 @@ function loadAttendance(){
   .then(r=>r.json())
   .then(data=>{
     daysBox.innerHTML="";
+
+    if(!data.length){
+      daysBox.innerHTML="لا توجد أيام حضور لهذا الشهر";
+      return;
+    }
+
     data.forEach(d=>{
       daysBox.innerHTML+=`
         <div class="day">
-        <input type="checkbox" data-date="${d.date}" data-day="${d.day}" onchange="calc()">
-        ${d.date} (${d.day})
+          <input type="checkbox"
+                 data-date="${d.date}"
+                 data-day="${d.day}"
+                 onchange="calc()">
+          ${d.date} (${d.day})
         </div>`;
     });
+  })
+  .catch(()=>{
+    daysBox.innerHTML="حدث خطأ في الاتصال";
   });
 }
 
+// حساب الإجمالي
 function calc(){
-  const checked=[...document.querySelectorAll(".day input:checked")];
-  daysCount.innerText=checked.length;
-  total.innerText=checked.length*200;
+  const checked =
+    document.querySelectorAll(".day input:checked").length;
+
+  daysCount.innerText = checked;
+  total.innerText = checked * 200;
+
   summary.style.display="block";
   submitBtn.style.display="block";
 }
 
+// تجميع التواريخ حسب أيام الأسبوع
 function groupByWeekDay(){
-  const checked=[...document.querySelectorAll(".day input:checked")];
+  const checked =
+    document.querySelectorAll(".day input:checked");
   const map={};
 
   checked.forEach(c=>{
-    const d=new Date(c.dataset.date);
-    const dayName=c.dataset.day;
+    const d = new Date(c.dataset.date);
+    const dayName = c.dataset.day;
+
     if(!map[dayName]) map[dayName]=[];
+
     map[dayName].push(d);
   });
 
   const result={};
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
   for(let k in map){
     if(map[k].length===1){
-      result[k]=map[k][0].getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][map[k][0].getMonth()];
+      result[k]=
+        map[k][0].getDate()+" "+
+        months[map[k][0].getMonth()];
     }else{
-      result[k]=map[k].map(x=>x.getDate()+"/"+(x.getMonth()+1)).join(" & ");
+      result[k]=
+        map[k].map(x=>x.getDate()+"/"+(x.getMonth()+1)).join(" & ");
     }
   }
   return result;
 }
 
+// إرسال البيانات + توليد PDF
 function submitExpenses(){
   const payload={
     action:"submit",
     id:empId.value,
+    name:"",
     month:month.value,
     days:+daysCount.innerText,
     total:+total.innerText,
@@ -172,7 +214,18 @@ function submitExpenses(){
   fetch(WEB_APP_URL,{
     method:"POST",
     body:JSON.stringify(payload)
-  }).then(()=>alert("تم إنشاء ملف المصروفات"));
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    if(res.pdf){
+      window.open(res.pdf,"_blank");
+    }else{
+      alert("تم الحفظ");
+    }
+  })
+  .catch(()=>{
+    alert("حدث خطأ أثناء الإرسال");
+  });
 }
 </script>
 
