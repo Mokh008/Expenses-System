@@ -120,8 +120,21 @@ button:disabled{
 <div class="days-box" id="daysBox"></div>
 
 <div class="summary" id="summary">
-<div>عدد الأيام: <strong id="daysCount">0</strong></div>
-<div>إجمالي الإعاشة: <strong id="total">0</strong> جنيه</div>
+  <div>عدد الأيام: <strong id="daysCount">0</strong></div>
+  <div>إجمالي الإعاشة: <strong id="total">0</strong> جنيه</div>
+</div>
+
+<!-- Transportation -->
+<div class="field">
+  <label>يوم مصروفات الانتقال</label>
+  <select id="transportDay">
+    <option value="">اختر يوم عمل</option>
+  </select>
+</div>
+
+<div class="field">
+  <label>قيمة مصروفات الانتقال (EGP)</label>
+  <input type="number" id="transportAmount" min="0" placeholder="مثال: 50">
 </div>
 
 <button id="submitBtn" style="display:none" onclick="submitExpenses()">
@@ -142,7 +155,7 @@ button:disabled{
 <script>
 // 🔗 BACKEND URL
 const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbwc_2LAAikrJClp2IY39eUtHu4bgqsUs7cpN4_EmZGAfbgaLyKyPnO1H52HPIChMfIu/exec";
+"https://script.google.com/macros/s/AKfycbyu6-0KHRcXvtLGMQnLeZP8Tvapmwles8sKtdnp5vEdjxMcjWFAUHH7t0PatW9bGeht/exec";
 
 // تحميل أيام الحضور
 function loadAttendance(){
@@ -160,6 +173,7 @@ function loadAttendance(){
   .then(r=>r.json())
   .then(data=>{
     daysBox.innerHTML="";
+    transportDay.innerHTML='<option value="">اختر يوم عمل</option>';
 
     if(!data.length){
       daysBox.innerHTML="لا توجد أيام حضور لهذا الشهر";
@@ -182,13 +196,23 @@ function loadAttendance(){
   });
 }
 
-// حساب الإجمالي
+// حساب الإجمالي + تعبئة Dropdown
 function calc(){
   const checked =
-    document.querySelectorAll(".day input:checked").length;
+    document.querySelectorAll(".day input:checked");
 
-  daysCount.innerText = checked;
-  total.innerText = checked * 200;
+  daysCount.innerText = checked.length;
+  total.innerText = checked.length * 200;
+
+  transportDay.innerHTML =
+    '<option value="">اختر يوم عمل</option>';
+
+  checked.forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c.dataset.day;
+    opt.textContent = `${c.dataset.date} (${c.dataset.day})`;
+    transportDay.appendChild(opt);
+  });
 
   summary.style.display="block";
   submitBtn.style.display="block";
@@ -221,6 +245,11 @@ function submitExpenses(){
     return;
   }
 
+  if(transportAmount.value && !transportDay.value){
+    alert("اختر يوم عمل لمصروفات الانتقال");
+    return;
+  }
+
   submitBtn.disabled = true;
   loader.style.display="block";
   successBox.style.display="none";
@@ -230,7 +259,11 @@ function submitExpenses(){
     month:month.value,
     days:+daysCount.innerText,
     total:+total.innerText,
-    breakdown:groupByWeekDay()
+    breakdown:groupByWeekDay(),
+    transport:{
+      day: transportDay.value,
+      amount: +transportAmount.value || 0
+    }
   };
 
   fetch(WEB_APP_URL,{
@@ -257,8 +290,7 @@ function submitExpenses(){
              font-weight:600;
            ">
           📄 تحميل ملف المصروفات (PDF)
-        </a>
-      `;
+        </a>`;
     }else{
       alert("تم الحفظ ولكن لم يتم إنشاء ملف PDF");
     }
