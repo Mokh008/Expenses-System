@@ -53,6 +53,7 @@ button:disabled{
   margin-bottom:8px;
   display:flex;
   gap:10px;
+  align-items:center;
 }
 .summary{
   background:#F1F5F9;
@@ -82,6 +83,22 @@ button:disabled{
   margin-top:25px;
   font-size:13px;
   color:#64748B;
+}
+.transport-box{
+  margin-top:15px;
+}
+.transport-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-bottom:8px;
+}
+.transport-row span{
+  flex:1;
+  font-size:14px;
+}
+.transport-row input{
+  width:120px;
 }
 </style>
 </head>
@@ -125,16 +142,9 @@ button:disabled{
 </div>
 
 <!-- Transportation -->
-<div class="field">
-  <label>يوم مصروفات الانتقال</label>
-  <select id="transportDay">
-    <option value="">اختر يوم عمل</option>
-  </select>
-</div>
-
-<div class="field">
-  <label>قيمة مصروفات الانتقال (EGP)</label>
-  <input type="number" id="transportAmount" min="0" placeholder="مثال: 50">
+<div class="field transport-box">
+  <label>مصروفات الانتقال (Transportation)</label>
+  <div id="transportBox"></div>
 </div>
 
 <button id="submitBtn" style="display:none" onclick="submitExpenses()">
@@ -155,7 +165,7 @@ button:disabled{
 <script>
 // 🔗 BACKEND URL
 const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbyu6-0KHRcXvtLGMQnLeZP8Tvapmwles8sKtdnp5vEdjxMcjWFAUHH7t0PatW9bGeht/exec";
+"https://script.google.com/macros/s/AKfycbxhPc-eV5kYp4riLPqGSRNPAfXRwBHKCWuLKOww74NkFpO9duqysplDNz2wg3jF9CoA/exec";
 
 // تحميل أيام الحضور
 function loadAttendance(){
@@ -168,12 +178,12 @@ function loadAttendance(){
 
   daysBox.style.display="block";
   daysBox.innerHTML="جاري التحميل...";
+  transportBox.innerHTML="";
 
   fetch(`${WEB_APP_URL}?action=getDays&id=${id}&month=${m}`)
   .then(r=>r.json())
   .then(data=>{
     daysBox.innerHTML="";
-    transportDay.innerHTML='<option value="">اختر يوم عمل</option>';
 
     if(!data.length){
       daysBox.innerHTML="لا توجد أيام حضور لهذا الشهر";
@@ -196,7 +206,7 @@ function loadAttendance(){
   });
 }
 
-// حساب الإجمالي + تعبئة Dropdown
+// حساب الإجمالي + بناء مصروفات الانتقال
 function calc(){
   const checked =
     document.querySelectorAll(".day input:checked");
@@ -204,21 +214,26 @@ function calc(){
   daysCount.innerText = checked.length;
   total.innerText = checked.length * 200;
 
-  transportDay.innerHTML =
-    '<option value="">اختر يوم عمل</option>';
+  transportBox.innerHTML="";
 
   checked.forEach(c=>{
-    const opt = document.createElement("option");
-    opt.value = c.dataset.day;
-    opt.textContent = `${c.dataset.date} (${c.dataset.day})`;
-    transportDay.appendChild(opt);
+    const row = document.createElement("div");
+    row.className = "transport-row";
+    row.innerHTML = `
+      <span>${c.dataset.date} (${c.dataset.day})</span>
+      <input type="number"
+             min="0"
+             placeholder="EGP"
+             data-day="${c.dataset.day}">
+    `;
+    transportBox.appendChild(row);
   });
 
   summary.style.display="block";
   submitBtn.style.display="block";
 }
 
-// تجميع حسب اليوم
+// تجميع حسب اليوم (الإعاشة)
 function groupByWeekDay(){
   const checked =
     document.querySelectorAll(".day input:checked");
@@ -237,16 +252,22 @@ function groupByWeekDay(){
   return final;
 }
 
+// تجميع مصروفات الانتقال
+function collectTransportation(){
+  const result = {};
+  document.querySelectorAll("#transportBox input").forEach(i=>{
+    if(i.value && +i.value > 0){
+      result[i.dataset.day] = +i.value;
+    }
+  });
+  return result;
+}
+
 // إرسال البيانات
 function submitExpenses(){
 
   if(+daysCount.innerText === 0){
     alert("من فضلك اختر يوم واحد على الأقل");
-    return;
-  }
-
-  if(transportAmount.value && !transportDay.value){
-    alert("اختر يوم عمل لمصروفات الانتقال");
     return;
   }
 
@@ -260,10 +281,7 @@ function submitExpenses(){
     days:+daysCount.innerText,
     total:+total.innerText,
     breakdown:groupByWeekDay(),
-    transport:{
-      day: transportDay.value,
-      amount: +transportAmount.value || 0
-    }
+    transport: collectTransportation()
   };
 
   fetch(WEB_APP_URL,{
