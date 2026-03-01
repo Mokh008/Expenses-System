@@ -146,7 +146,33 @@ button:disabled{
   <label>مصروفات الانتقال (Transportation)</label>
   <div id="transportBox"></div>
 </div>
+<!-- Electricity -->
+<div class="field">
+  <label>فاتورة كهرباء (اختياري)</label>
 
+  <input type="number"
+         id="electricAmount"
+         placeholder="المبلغ (EGP)"
+         min="0"
+         style="margin-bottom:10px;">
+
+  <div style="display:flex;gap:8px;">
+    <input type="number"
+           id="electricYear"
+           placeholder="السنة"
+           min="2024" max="2100">
+
+    <input type="number"
+           id="electricMonth"
+           placeholder="الشهر"
+           min="1" max="12">
+
+    <input type="number"
+           id="electricDay"
+           placeholder="اليوم"
+           min="1" max="31">
+  </div>
+</div>
 <button id="submitBtn" style="display:none" onclick="submitExpenses()">
 إنشاء ملف المصروفات
 </button>
@@ -165,7 +191,7 @@ button:disabled{
 <script>
 // 🔗 BACKEND URL
 const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbx6eT9mJXsFnGGrSVWQ9-dGirfy4BQjNsKA1Qio_sI9XF4WtH9whjsIxrnwwVAm5yo5/exec";
+"https://script.google.com/macros/s/AKfycbwdfKCN1bzVt3xrSEoaDXg0fYmvCfHYwvavH5h3xQ2cDrmXNX_y6sbsphOSzwGpTZvu/exec";
 
 // تحميل أيام الحضور
 function loadAttendance(){
@@ -275,15 +301,48 @@ function submitExpenses(){
   loader.style.display="block";
   successBox.style.display="none";
 
-  const payload={
-    id:empId.value,
-    month:month.value,
-    days:+daysCount.innerText,
-    total:+total.innerText,
-    breakdown:groupByWeekDay(),
-    transport: collectTransportation()
-  };
+  const elecAmount = +electricAmount.value || 0;
+const y = +electricYear.value;
+const m = +electricMonth.value;
+const d = +electricDay.value;
 
+// تحقق من صحة التاريخ لو فيه مبلغ
+if(elecAmount > 0){
+
+  if(!y || !m || !d){
+    alert("من فضلك أدخل تاريخ فاتورة الكهرباء");
+    return;
+  }
+
+  const testDate = new Date(y, m-1, d);
+
+  if(testDate.getFullYear() !== y ||
+     testDate.getMonth()+1 !== m ||
+     testDate.getDate() !== d){
+    alert("تاريخ فاتورة الكهرباء غير صحيح");
+    return;
+  }
+
+  if(m !== +month.value){
+    alert("شهر فاتورة الكهرباء لازم يطابق الشهر المختار");
+    return;
+  }
+}
+
+const payload={
+  id:empId.value,
+  month:month.value,
+  days:+daysCount.innerText,
+  total:+total.innerText,
+  breakdown:groupByWeekDay(),
+  transport: collectTransportation(),
+  electricity:{
+    amount: elecAmount,
+    year: y || "",
+    month: m || "",
+    day: d || ""
+  }
+};
   fetch(WEB_APP_URL,{
     method:"POST",
     body:JSON.stringify(payload)
