@@ -206,7 +206,7 @@ function loadAttendance(){
   daysBox.innerHTML="جاري التحميل...";
   transportBox.innerHTML="";
 
-fetch("https://script.google.com/macros/s/AKfycby_-uKV7j0f6mJnZvagmN7NjnpZtISqIQ4Inh_eAi06YlqhsVwEsbJcmxndh9dySew7/exec")
+fetch(`${WEB_APP_URL}?action=getDays&id=${id}&month=${m}`)
   .then(r=>r.json())
   .then(data=>{
     daysBox.innerHTML="";
