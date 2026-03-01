@@ -206,7 +206,7 @@ function loadAttendance(){
   daysBox.innerHTML="جاري التحميل...";
   transportBox.innerHTML="";
 
-fetch("https://script.google.com/macros/s/AKfycby_-uKV7j0f6mJnZvagmN7NjnpZtISqIQ4Inh_eAi06YlqhsVwEsbJcmxndh9dySew7/exec?action=getDays&id=1001194&month=2")
+fetch("https://script.google.com/macros/s/AKfycby_-uKV7j0f6mJnZvagmN7NjnpZtISqIQ4Inh_eAi06YlqhsVwEsbJcmxndh9dySew7/exec")
   .then(r=>r.json())
   .then(data=>{
     daysBox.innerHTML="";
