@@ -2,383 +2,354 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>تقديم مصروفات الإعاشة</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مصروفات الإعاشة — MK Nexus</title>
+<link rel="stylesheet" href="mk-theme.css">
 <style>
-:root{
-  --primary:#0F172A;
-  --bg:#F8FAFC;
-  --text:#020617;
+/* ── Page layout ── */
+body { display:block; }
+
+.page-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 60px;
 }
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:"Segoe UI",Tahoma,Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
+
+/* ── Form card ── */
+.form-card {
+  width: min(520px, 100%);
+  margin-top: 32px;
+  padding: clamp(24px,4vw,40px);
 }
-.container{
-  max-width:480px;
-  margin:60px auto;
-  background:#fff;
-  border-radius:16px;
-  box-shadow:0 20px 40px rgba(0,0,0,.1);
-  padding:30px;
+
+/* ── Day checkbox rows ── */
+.days-box { margin-top: 8px; display:none; }
+
+.day {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; margin-bottom: 6px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: rgba(8,13,24,.5);
+  transition: border-color .2s, background .2s;
+  cursor: pointer;
 }
-h1{text-align:center;color:var(--primary)}
-.field{margin-bottom:20px}
-label{font-weight:600;display:block;margin-bottom:6px}
-input,select,button{
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #CBD5E1;
-  font-size:15px;
+.day:hover { border-color: var(--border-a); background: rgba(45,212,191,.04); }
+.day input[type="checkbox"] {
+  width:18px; height:18px; accent-color: var(--accent);
+  cursor:pointer; flex-shrink:0;
 }
-button{
-  background:var(--primary);
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
-}
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-.days-box{margin-top:20px;display:none}
-.day{
-  border:1px solid #E5E7EB;
-  border-radius:8px;
-  padding:10px;
-  margin-bottom:8px;
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-.summary{
-  background:#F1F5F9;
-  padding:15px;
-  border-radius:10px;
-  margin-top:20px;
+.day-label { font-size:14px; color:var(--text); }
+
+/* ── Summary box ── */
+.summary {
+  margin-top: 16px; display:none; padding:16px 18px;
+  border-radius: var(--r-md);
+  background: rgba(45,212,191,.07);
+  border: 1px solid var(--border-a);
   display:none;
 }
-.loader{
-  display:none;
-  text-align:center;
-  margin-top:15px;
-  font-weight:600;
+.summary-row {
+  display:flex; justify-content:space-between;
+  font-size:14px; color:var(--muted); margin-bottom:6px;
 }
-.success{
-  display:none;
-  background:#DCFCE7;
-  color:#166534;
-  padding:12px;
-  border-radius:10px;
-  margin-top:15px;
-  text-align:center;
-  font-weight:600;
+.summary-row:last-child { margin-bottom:0; }
+.summary-val { font-family:var(--font-d); font-size:18px; font-weight:700; color:var(--accent); }
+
+/* ── Transport rows ── */
+.transport-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
 }
-.footer{
-  text-align:center;
-  margin-top:25px;
-  font-size:13px;
-  color:#64748B;
+.transport-row span { flex:1; font-size:13px; color:var(--muted); }
+.transport-row .mk-input { width:130px; }
+
+/* ── Elec date row ── */
+.date-row { display:flex; gap:8px; margin-top:8px; }
+.date-row .mk-input { flex:1; }
+
+/* ── Success link ── */
+.pdf-link {
+  display: inline-flex; align-items:center; gap:8px;
+  margin-top:14px; padding:12px 22px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#fff; font-weight:700; text-decoration:none; font-size:14px;
+  transition: .25s;
 }
-.transport-box{
-  margin-top:15px;
-}
-.transport-row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin-bottom:8px;
-}
-.transport-row span{
-  flex:1;
-  font-size:14px;
-}
-.transport-row input{
-  width:120px;
+.pdf-link:hover { transform:translateY(-2px); box-shadow:0 12px 35px rgba(45,212,191,.35); }
+
+/* ── Section divider ── */
+.mk-divider {
+  width:100%; height:1px; margin:20px 0;
+  background: linear-gradient(90deg, transparent, var(--border-a), transparent);
 }
 </style>
 </head>
-
 <body>
 
-<div class="container">
-<h1>تقديم مصروفات الإعاشة</h1>
-
-<div class="field">
-<label>رقم المهندس (ID)</label>
-<input type="number" id="empId" placeholder="مثال: 1001730">
+<!-- BG -->
+<div id="mk-bg"></div>
+<div id="mk-overlay"></div>
+<div class="starfall">
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
 </div>
 
-<div class="field">
-<label>الشهر</label>
-<select id="month">
-<option value="">اختر الشهر</option>
-<option value="1">يناير</option>
-<option value="2">فبراير</option>
-<option value="3">مارس</option>
-<option value="4">أبريل</option>
-<option value="5">مايو</option>
-<option value="6">يونيو</option>
-<option value="7">يوليو</option>
-<option value="8">أغسطس</option>
-<option value="9">سبتمبر</option>
-<option value="10">أكتوبر</option>
-<option value="11">نوفمبر</option>
-<option value="12">ديسمبر</option>
-</select>
-</div>
-
-<button onclick="loadAttendance()">تحميل أيام الحضور</button>
-
-<div class="days-box" id="daysBox"></div>
-
-<div class="summary" id="summary">
-  <div>عدد الأيام: <strong id="daysCount">0</strong></div>
-  <div>إجمالي الإعاشة: <strong id="total">0</strong> جنيه</div>
-</div>
-
-<!-- Transportation -->
-<div class="field transport-box">
-  <label>مصروفات الانتقال (Transportation)</label>
-  <div id="transportBox"></div>
-</div>
-<!-- Electricity -->
-<div class="field">
-  <label>فاتورة كهرباء (اختياري)</label>
-
-  <input type="number"
-         id="electricAmount"
-         placeholder="المبلغ (EGP)"
-         min="0"
-         style="margin-bottom:10px;">
-
-  <div style="display:flex;gap:8px;">
-    <input type="number"
-           id="electricYear"
-           placeholder="السنة"
-           min="2024" max="2100">
-
-    <input type="number"
-           id="electricMonth"
-           placeholder="الشهر"
-           min="1" max="12">
-
-    <input type="number"
-           id="electricDay"
-           placeholder="اليوم"
-           min="1" max="31">
+<!-- HEADER -->
+<header class="mk-header">
+  <div class="mk-header-brand">
+    <span class="mk-logo" style="font-size:20px">MK NEXUS</span>
+    <div class="mk-header-sep"></div>
+    <span class="mk-header-title">مصروفات الإعاشة</span>
   </div>
-</div>
-<button id="submitBtn" style="display:none" onclick="submitExpenses()">
-إنشاء ملف المصروفات
-</button>
+</header>
 
-<div class="loader" id="loader">
-⏳ جاري إنشاء ملف المصروفات برجاء الانتظار...
+<!-- CONTENT -->
+<div class="page-wrap">
+
+  <div class="mk-card form-card">
+
+    <!-- Engineer ID -->
+    <div class="mk-field">
+      <label class="mk-label">رقم المهندس (ID)</label>
+      <input class="mk-input" type="number" id="empId" placeholder="مثال: 1001730">
+    </div>
+
+    <!-- Month -->
+    <div class="mk-field">
+      <label class="mk-label">الشهر</label>
+      <select class="mk-select" id="month">
+        <option value="">اختر الشهر</option>
+        <option value="1">يناير</option><option value="2">فبراير</option>
+        <option value="3">مارس</option><option value="4">أبريل</option>
+        <option value="5">مايو</option><option value="6">يونيو</option>
+        <option value="7">يوليو</option><option value="8">أغسطس</option>
+        <option value="9">سبتمبر</option><option value="10">أكتوبر</option>
+        <option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+      </select>
+    </div>
+
+    <button class="mk-btn" style="width:100%" onclick="loadAttendance()">
+      تحميل أيام الحضور
+    </button>
+
+    <!-- Days -->
+    <div class="days-box" id="daysBox"></div>
+
+    <!-- Summary -->
+    <div class="summary" id="summary">
+      <div class="summary-row">
+        <span>عدد الأيام</span>
+        <span class="summary-val" id="daysCount">0</span>
+      </div>
+      <div class="summary-row">
+        <span>إجمالي الإعاشة</span>
+        <span class="summary-val"><span id="total">0</span> جنيه</span>
+      </div>
+    </div>
+
+    <div class="mk-divider" id="dividerTransport" style="display:none"></div>
+
+    <!-- Transport -->
+    <div class="mk-field" id="transportSection" style="display:none">
+      <label class="mk-label">مصروفات الانتقال (Transportation)</label>
+      <div id="transportBox"></div>
+    </div>
+
+    <div class="mk-divider" id="dividerElec" style="display:none"></div>
+
+    <!-- Electricity -->
+    <div class="mk-field" id="elecSection" style="display:none">
+      <label class="mk-label">فاتورة كهرباء (اختياري)</label>
+      <input class="mk-input" type="number" id="electricAmount" placeholder="المبلغ (EGP)" min="0">
+      <div class="date-row">
+        <input class="mk-input" type="number" id="electricYear"  placeholder="السنة"  min="2024" max="2100">
+        <input class="mk-input" type="number" id="electricMonth" placeholder="الشهر"  min="1"    max="12">
+        <input class="mk-input" type="number" id="electricDay"   placeholder="اليوم"  min="1"    max="31">
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <button id="submitBtn" class="mk-btn" style="width:100%;display:none;margin-top:8px" onclick="submitExpenses()">
+      إنشاء ملف المصروفات
+    </button>
+
+    <!-- Result -->
+    <div id="successBox" style="margin-top:16px"></div>
+
+  </div><!-- /form-card -->
+
+</div><!-- /page-wrap -->
+
+<!-- LOADER -->
+<div id="loader" class="mk-loader">
+  <div class="mk-spinner"></div>
+  <div class="mk-loader-text">جاري المعالجة...</div>
 </div>
 
-<div class="success" id="successBox"></div>
-
-<div class="footer">
-نظام مصروفات الإعاشة
-</div>
-</div>
-
+<!-- ══════════ SCRIPT (unchanged logic) ══════════ -->
 <script>
-// 🔗 BACKEND URL
-const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbyjrNOn_Jvo6Oom2JkCTbOR4xBQSQFkp3wsgUrLO_9L0Qjb-ipuhe0TWA3ivDozP_GL/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyjrNOn_Jvo6Oom2JkCTbOR4xBQSQFkp3wsgUrLO_9L0Qjb-ipuhe0TWA3ivDozP_GL/exec";
 
-// تحميل أيام الحضور
-function loadAttendance(){
+const empId   = document.getElementById("empId");
+const month   = document.getElementById("month");
+const daysBox = document.getElementById("daysBox");
+const summary = document.getElementById("summary");
+const daysCount = document.getElementById("daysCount");
+const total   = document.getElementById("total");
+const transportBox = document.getElementById("transportBox");
+const submitBtn = document.getElementById("submitBtn");
+const loader  = document.getElementById("loader");
+
+function showLoader(txt) {
+  document.querySelector(".mk-loader-text").textContent = txt || "جاري المعالجة...";
+  loader.style.display = "flex";
+}
+function hideLoader() { loader.style.display = "none"; }
+
+function loadAttendance() {
   const id = empId.value;
   const m  = month.value;
-  if(!id || !m){
-    alert("من فضلك أدخل رقم المهندس والشهر");
-    return;
-  }
+  if (!id || !m) { alert("من فضلك أدخل رقم المهندس والشهر"); return; }
 
-  daysBox.style.display="block";
-  daysBox.innerHTML="جاري التحميل...";
-  transportBox.innerHTML="";
+  daysBox.style.display = "block";
+  daysBox.innerHTML = '<div style="color:var(--muted);padding:10px 0;font-size:13px">جاري التحميل...</div>';
+  transportBox.innerHTML = "";
 
-fetch(`${WEB_APP_URL}?action=getDays&id=${id}&month=${m}`)
-  .then(r=>r.json())
-  .then(data=>{
-    daysBox.innerHTML="";
-
-    if(!data.length){
-      daysBox.innerHTML="لا توجد أيام حضور لهذا الشهر";
-      return;
-    }
-
-    data.forEach(d=>{
-      daysBox.innerHTML+=`
-        <div class="day">
-          <input type="checkbox"
-                 data-date="${d.date}"
-                 data-day="${d.day}"
-                 onchange="calc()">
-          ${d.date} (${d.day})
-        </div>`;
+  fetch(`${WEB_APP_URL}?action=getDays&id=${id}&month=${m}`)
+    .then(r => r.json())
+    .then(data => {
+      daysBox.innerHTML = "";
+      if (!data.length) {
+        daysBox.innerHTML = '<div style="color:var(--muted);padding:10px 0">لا توجد أيام حضور لهذا الشهر</div>';
+        return;
+      }
+      data.forEach(d => {
+        const row = document.createElement("div");
+        row.className = "day";
+        row.innerHTML = `
+          <input type="checkbox" data-date="${d.date}" data-day="${d.day}" onchange="calc()">
+          <span class="day-label">${d.date} (${d.day})</span>`;
+        daysBox.appendChild(row);
+      });
+    })
+    .catch(() => {
+      daysBox.innerHTML = '<div style="color:var(--danger);padding:10px 0">حدث خطأ في الاتصال</div>';
     });
-  })
-  .catch(()=>{
-    daysBox.innerHTML="حدث خطأ في الاتصال";
-  });
 }
 
-// حساب الإجمالي + بناء مصروفات الانتقال
-function calc(){
-  const checked =
-    document.querySelectorAll(".day input:checked");
-
+function calc() {
+  const checked = document.querySelectorAll(".day input:checked");
   daysCount.innerText = checked.length;
   total.innerText = checked.length * 200;
+  transportBox.innerHTML = "";
 
-  transportBox.innerHTML="";
+  if (checked.length) {
+    document.getElementById("dividerTransport").style.display = "";
+    document.getElementById("transportSection").style.display = "";
+    document.getElementById("dividerElec").style.display = "";
+    document.getElementById("elecSection").style.display = "";
+    summary.style.display = "block";
+    submitBtn.style.display = "block";
+  } else {
+    document.getElementById("dividerTransport").style.display = "none";
+    document.getElementById("transportSection").style.display = "none";
+    document.getElementById("dividerElec").style.display = "none";
+    document.getElementById("elecSection").style.display = "none";
+    summary.style.display = "none";
+    submitBtn.style.display = "none";
+  }
 
-  checked.forEach(c=>{
+  checked.forEach(c => {
     const row = document.createElement("div");
     row.className = "transport-row";
     row.innerHTML = `
       <span>${c.dataset.date} (${c.dataset.day})</span>
-      <input type="number"
-             min="0"
-             placeholder="EGP"
-             data-day="${c.dataset.day}">
-    `;
+      <input class="mk-input" type="number" min="0" placeholder="EGP" data-day="${c.dataset.day}" style="width:130px">`;
     transportBox.appendChild(row);
   });
-
-  summary.style.display="block";
-  submitBtn.style.display="block";
 }
 
-// تجميع حسب اليوم (الإعاشة)
-function groupByWeekDay(){
-  const checked =
-    document.querySelectorAll(".day input:checked");
-  const result={};
-
-  checked.forEach(c=>{
+function groupByWeekDay() {
+  const checked = document.querySelectorAll(".day input:checked");
+  const result = {};
+  checked.forEach(c => {
     const day = c.dataset.day;
-    if(!result[day]) result[day]=[];
+    if (!result[day]) result[day] = [];
     result[day].push(c.dataset.date);
   });
-
-  const final={};
-  for(let k in result){
-    final[k]=result[k].join(" & ");
-  }
+  const final = {};
+  for (let k in result) final[k] = result[k].join(" & ");
   return final;
 }
 
-// تجميع مصروفات الانتقال
-function collectTransportation(){
+function collectTransportation() {
   const result = {};
-  document.querySelectorAll("#transportBox input").forEach(i=>{
-    if(i.value && +i.value > 0){
-      result[i.dataset.day] = +i.value;
-    }
+  document.querySelectorAll("#transportBox input").forEach(i => {
+    if (i.value && +i.value > 0) result[i.dataset.day] = +i.value;
   });
   return result;
 }
 
-// إرسال البيانات
-function submitExpenses(){
-
-  if(+daysCount.innerText === 0){
-    alert("من فضلك اختر يوم واحد على الأقل");
-    return;
-  }
+function submitExpenses() {
+  if (+daysCount.innerText === 0) { alert("من فضلك اختر يوم واحد على الأقل"); return; }
 
   submitBtn.disabled = true;
-  loader.style.display="block";
-  successBox.style.display="none";
+  showLoader("جاري إنشاء ملف المصروفات...");
+  document.getElementById("successBox").innerHTML = "";
 
-  const elecAmount = +electricAmount.value || 0;
-const y = +electricYear.value;
-const m = +electricMonth.value;
-const d = +electricDay.value;
+  const elecAmount = +document.getElementById("electricAmount").value || 0;
+  const y = +document.getElementById("electricYear").value;
+  const m = +document.getElementById("electricMonth").value;
+  const d = +document.getElementById("electricDay").value;
 
-// تحقق من صحة التاريخ لو فيه مبلغ
-if(elecAmount > 0){
-
-  if(!y || !m || !d){
-    alert("من فضلك أدخل تاريخ فاتورة الكهرباء");
-    return;
-  }
-
-  const testDate = new Date(y, m-1, d);
-
-  if(testDate.getFullYear() !== y ||
-     testDate.getMonth()+1 !== m ||
-     testDate.getDate() !== d){
-    alert("تاريخ فاتورة الكهرباء غير صحيح");
-    return;
-  }
-
-  if(m !== +month.value){
-    alert("شهر فاتورة الكهرباء لازم يطابق الشهر المختار");
-    return;
-  }
-}
-
-const payload={
-  id:empId.value,
-  month:month.value,
-  days:+daysCount.innerText,
-  total:+total.innerText,
-  breakdown:groupByWeekDay(),
-  transport: collectTransportation(),
-  electricity:{
-    amount: elecAmount,
-    year: y || "",
-    month: m || "",
-    day: d || ""
-  }
-};
-  fetch(WEB_APP_URL,{
-    method:"POST",
-    body:JSON.stringify(payload)
-  })
-  .then(r=>r.json())
-  .then(res=>{
-    loader.style.display="none";
-    submitBtn.disabled = false;
-
-    if(res.pdfUrl){
-      successBox.style.display="block";
-      successBox.innerHTML = `
-        ✅ تم إنشاء ملف المصروفات بنجاح<br><br>
-        <a href="${res.pdfUrl}" target="_blank"
-           style="
-             display:inline-block;
-             background:#0F172A;
-             color:#fff;
-             padding:10px 20px;
-             border-radius:10px;
-             text-decoration:none;
-             font-weight:600;
-           ">
-          📄 تحميل ملف المصروفات (PDF)
-        </a>`;
-    }else{
-      alert("تم الحفظ ولكن لم يتم إنشاء ملف PDF");
+  if (elecAmount > 0) {
+    if (!y || !m || !d) { alert("من فضلك أدخل تاريخ فاتورة الكهرباء"); hideLoader(); submitBtn.disabled=false; return; }
+    const testDate = new Date(y, m-1, d);
+    if (testDate.getFullYear()!==y || testDate.getMonth()+1!==m || testDate.getDate()!==d) {
+      alert("تاريخ فاتورة الكهرباء غير صحيح"); hideLoader(); submitBtn.disabled=false; return;
     }
-  })
-  .catch(()=>{
-    loader.style.display="none";
-    submitBtn.disabled = false;
-    alert("حدث خطأ أثناء الإرسال");
-  });
+    if (m !== +month.value) {
+      alert("شهر فاتورة الكهرباء لازم يطابق الشهر المختار"); hideLoader(); submitBtn.disabled=false; return;
+    }
+  }
+
+  const payload = {
+    id: empId.value, month: month.value,
+    days: +daysCount.innerText, total: +total.innerText,
+    breakdown: groupByWeekDay(),
+    transport: collectTransportation(),
+    electricity: { amount:elecAmount, year:y||"", month:m||"", day:d||"" }
+  };
+
+  fetch(WEB_APP_URL, { method:"POST", body:JSON.stringify(payload) })
+    .then(r => r.json())
+    .then(res => {
+      hideLoader(); submitBtn.disabled = false;
+      const box = document.getElementById("successBox");
+      if (res.pdfUrl) {
+        box.innerHTML = `
+          <div class="mk-success">✅ تم إنشاء ملف المصروفات بنجاح</div>
+          <div style="text-align:center">
+            <a href="${res.pdfUrl}" target="_blank" class="pdf-link">
+              📄 تحميل ملف المصروفات (PDF)
+            </a>
+          </div>`;
+      } else {
+        box.innerHTML = '<div class="mk-error">تم الحفظ ولكن لم يتم إنشاء ملف PDF</div>';
+      }
+    })
+    .catch(() => {
+      hideLoader(); submitBtn.disabled = false;
+      document.getElementById("successBox").innerHTML = '<div class="mk-error">حدث خطأ أثناء الإرسال</div>';
+    });
 }
 </script>
-
 </body>
 </html>
