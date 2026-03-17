@@ -7,215 +7,97 @@
 <link rel="stylesheet" href="mk-theme.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<!-- ══════════ AUTH GUARD ══════════ -->
 <script>
 (function() {
+  const MK_LOGIN = "https://mokh008.github.io/Company-Portal/index.html";
   let authRaw = sessionStorage.getItem("authUser");
   if (!authRaw) {
-    const params = new URLSearchParams(location.search);
-    const encoded = params.get("auth");
-    if (encoded) {
-      try {
-        authRaw = atob(encoded);
+    try {
+      const enc = new URLSearchParams(location.search).get("auth");
+      if (enc) {
+        authRaw = decodeURIComponent(escape(atob(enc)));
         sessionStorage.setItem("authUser", authRaw);
-        history.replaceState({}, "", location.pathname);
-      } catch(e) {}
-    }
+        history.replaceState({}, document.title, location.pathname);
+      }
+    } catch(e) {}
   }
   if (!authRaw) {
-    alert("يجب الدخول عبر منصة MK Nexus");
-    location.href = "https://mokh008.github.io/Attendance-Login/";
-    throw new Error("Unauthorized");
+    alert("يجب الدخول عبر منصة MK Nexus أولاً");
+    location.replace(MK_LOGIN);
+    throw 0;
   }
-  const user = JSON.parse(authRaw);
-  const role = (user.role || "").trim().toLowerCase();
-  if (role !== "admin") {
+  const u = JSON.parse(authRaw);
+  if ((u.role||"").trim().toLowerCase() !== "admin") {
     alert("هذه الصفحة للمسؤول فقط");
-    history.back();
-    throw new Error("Forbidden");
+    location.replace(MK_LOGIN);
+    throw 0;
   }
-  window._AUTH_USER = user;
+  window._AUTH_USER = u;
 })();
 </script>
 
 <style>
-body { display: block; }
-
-.page-wrap {
-  padding: 0 clamp(12px,2.5vw,40px) 60px;
+body { display:block; }
+.page-wrap { padding:0 clamp(12px,2.5vw,40px) 60px; }
+.top-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:24px 0 20px; }
+.filter-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.filter-sel {
+  padding:9px 32px 9px 12px; border-radius:10px;
+  background:rgba(8,13,24,.85); border:1px solid var(--border);
+  color:var(--text); font-size:13px; outline:none;
+  min-height:40px; min-width:150px; cursor:pointer;
+  appearance:none; -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:left 10px center; transition:border-color .2s;
 }
-
-/* ── Top bar ── */
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 24px 0 20px;
-}
-
-/* ── Filter row ── */
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-select {
-  padding: 9px 14px;
-  border-radius: var(--r-md, 12px);
-  background: rgba(8,13,24,.85);
-  border: 1px solid var(--border, #1f2937);
-  color: var(--text, #f1f5f9);
-  font-size: 14px;
-  outline: none;
-  transition: border-color .2s;
-  min-height: 42px;
-  min-width: 160px;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: left 12px center;
-  padding-left: 32px;
-}
-.filter-select:focus { border-color: var(--accent, #2dd4bf); box-shadow: 0 0 0 3px rgba(45,212,191,.12); }
-
-/* ── Export btn ── */
+.filter-sel:focus { border-color:var(--accent); }
 .export-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 9px 18px; border: none; border-radius: var(--r-sm, 8px);
-  background: linear-gradient(135deg,#166534,#4ade80);
-  color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
-  transition: .25s; min-height: 42px;
-  -webkit-tap-highlight-color: transparent;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 18px; border:none; border-radius:10px;
+  background:linear-gradient(135deg,#166534,#4ade80);
+  color:#fff; font-weight:700; font-size:13px; cursor:pointer;
+  transition:.2s; min-height:40px;
 }
-.export-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(74,222,128,.3); }
-
-/* ── KPI strip ── */
-.kpi-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
-  gap: 14px;
-  margin-bottom: 22px;
-}
-.kpi-mini {
-  padding: 18px 16px;
-  text-align: center;
-}
-.kpi-mini h4 {
-  font-size: 11px; font-weight: 500; color: var(--muted, #94a3b8);
-  text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px;
-}
-.kpi-mini p {
-  font-size: clamp(22px,2.5vw,32px); font-weight: 700; margin: 0;
-  background: linear-gradient(135deg, var(--accent,#2dd4bf), var(--accent2,#818cf8));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-
-/* ── Table ── */
-.table-wrap {
-  overflow-x: auto;
-  border-radius: var(--r-lg, 16px);
-}
-.rpt-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.rpt-table thead th {
-  padding: 12px 14px;
-  background: rgba(45,212,191,.08);
-  color: var(--accent, #2dd4bf);
-  font-weight: 700;
-  letter-spacing: .5px;
-  white-space: nowrap;
-  border-bottom: 1px solid var(--border, #1f2937);
-  text-align: right;
-}
-.rpt-table tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,.04);
-  transition: background .15s;
-}
-.rpt-table tbody tr:hover { background: rgba(45,212,191,.04); }
-.rpt-table td {
-  padding: 11px 14px;
-  color: var(--text, #f1f5f9);
-  white-space: nowrap;
-}
-.rpt-table td.amount {
-  font-family: var(--font-d, monospace);
-  font-weight: 700;
-  color: var(--accent, #2dd4bf);
-}
-.rpt-table td.eng-id { color: var(--muted, #94a3b8); font-size: 12px; }
-
-/* type badges */
-.type-badge {
-  display: inline-block;
-  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-.type-living     { background: rgba(45,212,191,.12); color: #2dd4bf; border: 1px solid rgba(45,212,191,.25); }
-.type-transport  { background: rgba(129,140,248,.12); color: #818cf8; border: 1px solid rgba(129,140,248,.25); }
-.type-electricity{ background: rgba(250,204,21,.1);  color: #facc15; border: 1px solid rgba(250,204,21,.25); }
-.type-other      { background: rgba(148,163,184,.1);  color: #94a3b8; border: 1px solid rgba(148,163,184,.2); }
-
-/* empty / error states */
-.state-msg {
-  text-align: center; padding: 60px 20px;
-  color: var(--muted, #94a3b8); font-size: 14px;
-}
-
-/* mobile cards */
-@media (max-width: 700px) {
-  .table-wrap { display: none; }
-  .mobile-cards { display: flex; flex-direction: column; gap: 14px; }
-}
-@media (min-width: 701px) {
-  .mobile-cards { display: none; }
-}
-
-.rpt-card {
-  background: var(--card, #121826);
-  border: 1px solid var(--border, #1f2937);
-  border-radius: 18px; padding: 18px;
-  position: relative;
-}
-.rpt-card-top {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 12px; gap: 10px;
-}
-.rpt-card-name { font-weight: 700; font-size: 15px; color: var(--text); }
-.rpt-card-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px;
-}
-.rpt-card-field-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 2px; }
-.rpt-card-field-value { font-size: 13px; color: var(--text); }
-.rpt-card-field-value.big { font-size: 17px; font-weight: 700; color: var(--accent); }
-
-/* logout btn */
-.logout-btn {
-  padding: 6px 14px; font-size: 12px;
-  background: transparent; border: 1px solid var(--border, #1f2937);
-  color: var(--muted); border-radius: var(--r-sm, 8px); cursor: pointer;
-  transition: .2s; min-height: 36px;
-}
-.logout-btn:hover { border-color: var(--danger, #f87171); color: var(--danger); }
+.export-btn:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(74,222,128,.3); }
+.export-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
+.kpi-mini { padding:16px; text-align:center; }
+.kpi-mini h4 { font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+.kpi-mini p { font-size:clamp(18px,2.5vw,28px); font-weight:700; margin:0; background:linear-gradient(135deg,#2dd4bf,#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.table-wrap { overflow-x:auto; border-radius:16px; }
+.rpt-table { width:100%; border-collapse:collapse; font-size:13px; }
+.rpt-table thead th { padding:12px 14px; background:rgba(45,212,191,.08); color:var(--accent); font-weight:700; white-space:nowrap; border-bottom:1px solid var(--border); text-align:right; }
+.rpt-table tbody tr { border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; }
+.rpt-table tbody tr:hover { background:rgba(45,212,191,.04); }
+.rpt-table td { padding:10px 14px; color:var(--text); white-space:nowrap; }
+.rpt-table td.num { font-weight:700; color:var(--accent); font-family:monospace; }
+.rpt-table td.muted { color:var(--muted); font-size:12px; }
+.type-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.t-living      { background:rgba(45,212,191,.12); color:#2dd4bf; border:1px solid rgba(45,212,191,.25); }
+.t-transport   { background:rgba(129,140,248,.12); color:#818cf8; border:1px solid rgba(129,140,248,.25); }
+.t-electricity { background:rgba(250,204,21,.1);  color:#facc15; border:1px solid rgba(250,204,21,.25); }
+.t-other       { background:rgba(148,163,184,.1);  color:#94a3b8; border:1px solid rgba(148,163,184,.2); }
+.state-msg { text-align:center; padding:60px 20px; color:var(--muted); font-size:14px; }
+@media(max-width:700px){ .table-wrap{display:none;} .mob-cards{display:flex;flex-direction:column;gap:12px;} }
+@media(min-width:701px){ .mob-cards{display:none;} }
+.mob-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; }
+.mob-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; gap:8px; }
+.mob-name { font-weight:700; font-size:14px; }
+.mob-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; }
+.mob-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px; }
+.mob-val { font-size:13px; color:var(--text); }
+.mob-val.big { font-size:16px; font-weight:700; color:var(--accent); }
+.back-btn { padding:6px 14px; font-size:12px; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:8px; cursor:pointer; transition:.2s; min-height:36px; }
+.back-btn:hover { border-color:var(--accent); color:var(--accent); }
 </style>
 </head>
 <body>
-
-<div id="mk-bg"></div>
-<div id="mk-overlay"></div>
+<div id="mk-bg"></div><div id="mk-overlay"></div>
 <div class="starfall">
-  <div class="falling-star"></div><div class="falling-star"></div>
-  <div class="falling-star"></div><div class="falling-star"></div>
-  <div class="falling-star"></div><div class="falling-star"></div>
-  <div class="falling-star"></div><div class="falling-star"></div>
-  <div class="falling-star"></div><div class="falling-star"></div>
-  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div><div class="falling-star"></div>
 </div>
 
 <header class="mk-header">
@@ -224,250 +106,164 @@ body { display: block; }
     <div class="mk-header-sep"></div>
     <span class="mk-header-title">تقرير المصروفات</span>
   </div>
-  <button class="logout-btn" onclick="history.back()">← رجوع</button>
+  <button class="back-btn" onclick="window.close()">✕ إغلاق</button>
 </header>
 
 <div class="page-wrap">
-
-  <!-- Top bar: filter + export -->
   <div class="top-bar">
     <div class="filter-row">
-      <select class="filter-select" id="monthFilter" onchange="applyFilter()">
+      <select class="filter-sel" id="monthFilter" onchange="applyFilter()">
         <option value="">كل الشهور</option>
       </select>
-      <select class="filter-select" id="typeFilter" onchange="applyFilter()">
+      <select class="filter-sel" id="typeFilter" onchange="applyFilter()">
         <option value="">كل الأنواع</option>
         <option value="إعاشة">إعاشة</option>
         <option value="انتقال">انتقال</option>
         <option value="كهرباء">كهرباء</option>
       </select>
     </div>
-    <button class="export-btn" onclick="exportExcel()">
-      📥 تصدير Excel
-    </button>
+    <button class="export-btn" id="exportBtn" onclick="exportExcel()">📥 تصدير Excel</button>
   </div>
 
-  <!-- KPIs -->
   <div class="kpi-strip">
     <div class="mk-card kpi-mini"><h4>إجمالي المبالغ</h4><p id="kpiTotal">—</p></div>
     <div class="mk-card kpi-mini"><h4>عدد السجلات</h4><p id="kpiCount">—</p></div>
-    <div class="mk-card kpi-mini"><h4>عدد المهندسين</h4><p id="kpiEngineers">—</p></div>
+    <div class="mk-card kpi-mini"><h4>عدد المهندسين</h4><p id="kpiEng">—</p></div>
     <div class="mk-card kpi-mini"><h4>إجمالي إعاشة</h4><p id="kpiLiving">—</p></div>
     <div class="mk-card kpi-mini"><h4>إجمالي انتقال</h4><p id="kpiTransport">—</p></div>
     <div class="mk-card kpi-mini"><h4>إجمالي كهرباء</h4><p id="kpiElec">—</p></div>
   </div>
 
-  <!-- Desktop table -->
   <div class="mk-card table-wrap">
-    <table class="rpt-table" id="reportTable">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>رقم المهندس</th>
-          <th>اسم المهندس</th>
-          <th>الشهر</th>
-          <th>عدد الأيام</th>
-          <th>نوع المصروف</th>
-          <th>المبلغ (جنيه)</th>
-          <th>تاريخ التسجيل</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="8" class="state-msg">جاري التحميل...</td></tr>
-      </tbody>
+    <table class="rpt-table">
+      <thead><tr>
+        <th>#</th><th>رقم المهندس</th><th>اسم المهندس</th>
+        <th>الشهر</th><th>أيام</th><th>النوع</th>
+        <th>إعاشة</th><th>انتقال</th><th>كهرباء</th><th>الإجمالي</th><th>تاريخ التسجيل</th>
+      </tr></thead>
+      <tbody id="tBody"><tr><td colspan="11" class="state-msg">جاري التحميل...</td></tr></tbody>
     </table>
   </div>
-
-  <!-- Mobile cards -->
-  <div class="mobile-cards" id="mobileCards"></div>
-
+  <div class="mob-cards" id="mobCards"></div>
 </div>
 
-<!-- LOADER -->
 <div id="globalLoader" class="mk-loader">
   <div class="mk-spinner"></div>
-  <div class="mk-loader-text" id="loaderText">جاري التحميل...</div>
+  <div class="mk-loader-text" id="loaderTxt">جاري التحميل...</div>
 </div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyjrNOn_Jvo6Oom2JkCTbOR4xBQSQFkp3wsgUrLO_9L0Qjb-ipuhe0TWA3ivDozP_GL/exec";
-
-let allData    = [];
-let filtered   = [];
-
-function showLoader(t) {
-  document.getElementById("loaderText").innerText = t || "جاري التحميل...";
-  document.getElementById("globalLoader").style.display = "flex";
-}
-function hideLoader() { document.getElementById("globalLoader").style.display = "none"; }
-
-function currency(n) {
-  return new Intl.NumberFormat("ar-EG").format(n || 0);
-}
+let allData=[], filtered=[];
+const showL = t => { document.getElementById("loaderTxt").innerText=t||"جاري التحميل..."; document.getElementById("globalLoader").style.display="flex"; };
+const hideL = () => document.getElementById("globalLoader").style.display="none";
+const fmt = n => new Intl.NumberFormat("ar-EG").format(n||0);
 
 function typeClass(t) {
-  if (!t) return "type-other";
-  if (t.includes("إعاشة") || t.includes("معيشة")) return "type-living";
-  if (t.includes("انتقال") || t.includes("نقل"))  return "type-transport";
-  if (t.includes("كهرباء"))                        return "type-electricity";
-  return "type-other";
+  if(!t) return "t-other";
+  if(t.includes("إعاشة")||t.includes("معيشة")) return "t-living";
+  if(t.includes("انتقال")||t.includes("نقل"))  return "t-transport";
+  if(t.includes("كهرباء")) return "t-electricity";
+  return "t-other";
 }
-
-/* ── Build month filter options ── */
 function buildMonthFilter(data) {
-  const months = [...new Set(data.map(r => r.month).filter(Boolean))].sort().reverse();
-  const sel = document.getElementById("monthFilter");
-  months.forEach(m => {
-    const o = document.createElement("option");
-    o.value = m; o.textContent = m;
-    sel.appendChild(o);
-  });
+  const months=[...new Set(data.map(r=>r.month).filter(Boolean))].sort().reverse();
+  const sel=document.getElementById("monthFilter");
+  months.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; sel.appendChild(o); });
 }
-
-/* ── Apply filters ── */
 function applyFilter() {
-  const month = document.getElementById("monthFilter").value;
-  const type  = document.getElementById("typeFilter").value;
-
-  filtered = allData.filter(r => {
-    if (month && r.month !== month) return false;
-    if (type  && !(r.expenseType || "").includes(type)) return false;
+  const month=document.getElementById("monthFilter").value;
+  const type =document.getElementById("typeFilter").value;
+  filtered=allData.filter(r=>{
+    if(month && r.month!==month) return false;
+    if(type  && !(r.expenseType||"").includes(type)) return false;
     return true;
   });
-
-  renderTable(filtered);
-  renderKPIs(filtered);
-  renderMobileCards(filtered);
+  renderKPIs(filtered); renderTable(filtered); renderMob(filtered);
 }
-
-/* ── KPIs ── */
 function renderKPIs(data) {
-  const total     = data.reduce((s, r) => s + (+r.totalAmount || 0), 0);
-  const living    = data.filter(r => (r.expenseType||"").includes("إعاشة")).reduce((s,r) => s+(+r.livingAmount||0), 0);
-  const transport = data.filter(r => (r.expenseType||"").includes("انتقال")).reduce((s,r) => s+(+r.transportAmount||0), 0);
-  const elec      = data.filter(r => (r.expenseType||"").includes("كهرباء")).reduce((s,r) => s+(+r.electricityAmount||0), 0);
-  const engineers = new Set(data.map(r => r.engineerId)).size;
-
-  document.getElementById("kpiTotal").textContent      = currency(total);
-  document.getElementById("kpiCount").textContent      = data.length;
-  document.getElementById("kpiEngineers").textContent  = engineers;
-  document.getElementById("kpiLiving").textContent     = currency(living);
-  document.getElementById("kpiTransport").textContent  = currency(transport);
-  document.getElementById("kpiElec").textContent       = currency(elec);
+  document.getElementById("kpiTotal").textContent    = fmt(data.reduce((s,r)=>s+(+r.totalAmount||0),0));
+  document.getElementById("kpiCount").textContent    = data.length;
+  document.getElementById("kpiEng").textContent      = new Set(data.map(r=>r.engineerId)).size;
+  document.getElementById("kpiLiving").textContent   = fmt(data.reduce((s,r)=>s+(+r.livingAmount||0),0));
+  document.getElementById("kpiTransport").textContent= fmt(data.reduce((s,r)=>s+(+r.transportAmount||0),0));
+  document.getElementById("kpiElec").textContent     = fmt(data.reduce((s,r)=>s+(+r.electricityAmount||0),0));
 }
-
-/* ── Desktop table ── */
 function renderTable(data) {
-  const tbody = document.getElementById("tableBody");
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="state-msg">لا توجد بيانات مطابقة</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = data.map((r, i) => `
+  const tbody=document.getElementById("tBody");
+  if(!data.length){ tbody.innerHTML=`<tr><td colspan="11" class="state-msg">لا توجد بيانات مطابقة</td></tr>`; return; }
+  tbody.innerHTML=data.map((r,i)=>`
     <tr>
-      <td style="color:var(--muted);font-size:12px">${i + 1}</td>
-      <td class="eng-id">${r.engineerId || "—"}</td>
-      <td>${r.engineerName || "—"}</td>
-      <td>${r.month || "—"}</td>
-      <td style="text-align:center">${r.daysCount || "—"}</td>
-      <td><span class="type-badge ${typeClass(r.expenseType)}">${r.expenseType || "—"}</span></td>
-      <td class="amount">${currency(r.totalAmount)}</td>
-      <td style="color:var(--muted);font-size:12px">${r.submittedAt || "—"}</td>
-    </tr>
-  `).join("");
+      <td class="muted">${i+1}</td>
+      <td class="muted">${r.engineerId||"—"}</td>
+      <td>${r.engineerName||"—"}</td>
+      <td>${r.month||"—"}</td>
+      <td style="text-align:center">${r.daysCount||"—"}</td>
+      <td><span class="type-badge ${typeClass(r.expenseType)}">${r.expenseType||"—"}</span></td>
+      <td class="num">${fmt(r.livingAmount)}</td>
+      <td class="num">${fmt(r.transportAmount)}</td>
+      <td class="num">${fmt(r.electricityAmount)}</td>
+      <td class="num" style="font-size:14px">${fmt(r.totalAmount)}</td>
+      <td class="muted">${r.submittedAt||"—"}</td>
+    </tr>`).join("");
 }
-
-/* ── Mobile cards ── */
-function renderMobileCards(data) {
-  const box = document.getElementById("mobileCards");
-  if (!data.length) {
-    box.innerHTML = `<div class="state-msg">لا توجد بيانات مطابقة</div>`;
-    return;
-  }
-  box.innerHTML = data.map(r => `
-    <div class="rpt-card">
-      <div class="rpt-card-top">
-        <div class="rpt-card-name">${r.engineerName || "—"}</div>
-        <span class="type-badge ${typeClass(r.expenseType)}">${r.expenseType || "—"}</span>
+function renderMob(data) {
+  const box=document.getElementById("mobCards");
+  if(!data.length){ box.innerHTML=`<div class="state-msg">لا توجد بيانات</div>`; return; }
+  box.innerHTML=data.map(r=>`
+    <div class="mob-card">
+      <div class="mob-top"><div class="mob-name">${r.engineerName||"—"}</div>
+        <span class="type-badge ${typeClass(r.expenseType)}">${r.expenseType||"—"}</span></div>
+      <div class="mob-grid">
+        <div><div class="mob-lbl">رقم المهندس</div><div class="mob-val">${r.engineerId||"—"}</div></div>
+        <div><div class="mob-lbl">الشهر</div><div class="mob-val">${r.month||"—"}</div></div>
+        <div><div class="mob-lbl">إعاشة</div><div class="mob-val">${fmt(r.livingAmount)}</div></div>
+        <div><div class="mob-lbl">انتقال</div><div class="mob-val">${fmt(r.transportAmount)}</div></div>
+        <div><div class="mob-lbl">كهرباء</div><div class="mob-val">${fmt(r.electricityAmount)}</div></div>
+        <div><div class="mob-lbl">الإجمالي</div><div class="mob-val big">${fmt(r.totalAmount)} ج</div></div>
       </div>
-      <div class="rpt-card-grid">
-        <div>
-          <div class="rpt-card-field-label">رقم المهندس</div>
-          <div class="rpt-card-field-value">${r.engineerId || "—"}</div>
-        </div>
-        <div>
-          <div class="rpt-card-field-label">الشهر</div>
-          <div class="rpt-card-field-value">${r.month || "—"}</div>
-        </div>
-        <div>
-          <div class="rpt-card-field-label">عدد الأيام</div>
-          <div class="rpt-card-field-value">${r.daysCount || "—"}</div>
-        </div>
-        <div>
-          <div class="rpt-card-field-label">المبلغ</div>
-          <div class="rpt-card-field-value big">${currency(r.totalAmount)} ج</div>
-        </div>
-        <div>
-          <div class="rpt-card-field-label">تاريخ التسجيل</div>
-          <div class="rpt-card-field-value" style="font-size:11px">${r.submittedAt || "—"}</div>
-        </div>
-      </div>
-    </div>
-  `).join("");
+    </div>`).join("");
 }
-
-/* ── Export Excel ── */
 function exportExcel() {
-  if (!filtered.length) { alert("لا توجد بيانات للتصدير"); return; }
-
-  const month = document.getElementById("monthFilter").value || "كل الشهور";
-  const rows  = filtered.map((r, i) => ({
-    "#":             i + 1,
-    "رقم المهندس":   r.engineerId   || "",
-    "اسم المهندس":   r.engineerName || "",
-    "الشهر":         r.month        || "",
-    "عدد الأيام":    r.daysCount    || "",
-    "نوع المصروف":   r.expenseType  || "",
-    "إجمالي الإعاشة":     r.livingAmount     || 0,
-    "إجمالي الانتقال":    r.transportAmount  || 0,
-    "إجمالي الكهرباء":    r.electricityAmount|| 0,
-    "الإجمالي الكلي":     r.totalAmount      || 0,
-    "تاريخ التسجيل":  r.submittedAt  || ""
+  if(!filtered.length){ alert("لا توجد بيانات للتصدير"); return; }
+  const month=document.getElementById("monthFilter").value||"كل_الشهور";
+  const btn=document.getElementById("exportBtn");
+  btn.disabled=true;
+  const rows=filtered.map((r,i)=>({
+    "#":             i+1,
+    "رقم المهندس":   r.engineerId        ||"",
+    "اسم المهندس":   r.engineerName      ||"",
+    "الشهر":         r.month             ||"",
+    "عدد الأيام":    r.daysCount         ||0,
+    "نوع المصروف":   r.expenseType       ||"",
+    "إعاشة (ج)":    +r.livingAmount      ||0,
+    "انتقال (ج)":   +r.transportAmount   ||0,
+    "كهرباء (ج)":   +r.electricityAmount ||0,
+    "الإجمالي (ج)": +r.totalAmount       ||0,
+    "تاريخ التسجيل": r.submittedAt       ||""
   }));
-
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "المصروفات");
-  XLSX.writeFile(wb, `تقرير_المصروفات_${month}.xlsx`);
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:5},{wch:14},{wch:22},{wch:12},{wch:10},{wch:14},{wch:12},{wch:12},{wch:12},{wch:14},{wch:18}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"المصروفات");
+  XLSX.writeFile(wb,`تقرير_المصروفات_${month}.xlsx`);
+  btn.disabled=false;
 }
-
-/* ── Load data ── */
 function loadReport() {
-  showLoader("جاري تحميل التقرير...");
-
+  showL("جاري تحميل بيانات المصروفات...");
   fetch(`${API_URL}?action=getExpensesReport&adminKey=mk_admin_2025`)
-    .then(r => r.json())
-    .then(data => {
-      hideLoader();
-      if (!Array.isArray(data)) {
-        document.getElementById("tableBody").innerHTML =
-          `<tr><td colspan="8" class="state-msg">⚠️ خطأ في تحميل البيانات</td></tr>`;
+    .then(r=>r.json())
+    .then(data=>{
+      hideL();
+      if(!Array.isArray(data)){
+        document.getElementById("tBody").innerHTML=`<tr><td colspan="11" class="state-msg">⚠️ أضف action=getExpensesReport في الـ Apps Script أولاً</td></tr>`;
         return;
       }
-      allData  = data;
-      filtered = data;
-      buildMonthFilter(data);
-      renderTable(data);
-      renderKPIs(data);
-      renderMobileCards(data);
+      allData=filtered=data;
+      buildMonthFilter(data); renderKPIs(data); renderTable(data); renderMob(data);
     })
-    .catch(() => {
-      hideLoader();
-      document.getElementById("tableBody").innerHTML =
-        `<tr><td colspan="8" class="state-msg">❌ تعذر الاتصال بالخادم</td></tr>`;
-    });
+    .catch(()=>{ hideL(); document.getElementById("tBody").innerHTML=`<tr><td colspan="11" class="state-msg">❌ تعذر الاتصال بالخادم</td></tr>`; });
 }
-
 loadReport();
 </script>
 </body>
